@@ -1,0 +1,47 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environments & Secret credentials
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+*.env
+!.env.example
+env/
+venv/
+ENV/
+*.key
+*.pem
+*.cert
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+sentiment_system.db
+
+# Uploads directory contents except .gitkeep
+uploads/*
+!uploads/.gitkeep
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store

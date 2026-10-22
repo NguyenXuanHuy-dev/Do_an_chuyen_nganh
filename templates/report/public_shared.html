@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo Cáo Phân Tích Cảm Xúc Khách Hàng (Công Khai)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body style="background: var(--bg-body); padding: 2rem 1rem;">
+    <div style="max-width: 900px; margin: 0 auto;">
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div class="brand-icon">✨</div>
+                <div>
+                    <h2 style="font-weight: 800; font-size: 1.25rem;">Hệ Thống Phân Tích Cảm Xúc</h2>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">Báo cáo được chia sẻ công khai</span>
+                </div>
+            </div>
+
+            <button onclick="window.print()" class="btn btn-outline btn-sm">🖨️ In / Lưu PDF</button>
+        </div>
+
+        {% if error %}
+        <div class="card" style="text-align: center; padding: 3rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+            <h3>{{ error }}</h3>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">Vui lòng liên hệ người chia sẻ để được cấp quyền xem báo cáo.</p>
+        </div>
+        {% else %}
+        <div class="tabs-nav" style="margin-bottom: 1.5rem;">
+            <a href="?style=bod" class="tab-btn {% if current_style == 'bod' %}active{% endif %}" style="text-decoration: none;">
+                👔 Báo cáo VOC Ban Giám Đốc
+            </a>
+            <a href="?style=cskh" class="tab-btn {% if current_style == 'cskh' %}active{% endif %}" style="text-decoration: none;">
+                🛠️ Báo cáo Danh mục lỗi CSKH / Kỹ thuật
+            </a>
+        </div>
+
+        <div class="card" style="padding: 2.5rem; line-height: 1.8;">
+            <div class="report-markdown-body">
+                {{ report_content | replace('\n', '<br>') | safe }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

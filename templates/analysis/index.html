@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block title %}Trung Tâm Phân Tích Cảm Xúc Khách Hàng - Sentiment AI{% endblock %}
+{% block page_title %}Trung Tâm Phân Tích Cảm Xúc Khách Hàng{% endblock %}
+
+{% block content %}
+<!-- =========================================================================
+     PHẦN 1: BỘ PHÂN TÍCH CẢM XÚC BẰNG API KEY & PROMPT ĐỊNH HƯỚNG AI
+     ========================================================================= -->
+<div class="card card-glass" style="margin-bottom: 2rem; border-top: 4px solid var(--primary); box-shadow: var(--shadow-lg);">
+    
+    <!-- API KEY & ENGINE CONFIGURATION BAR -->
+    <div style="background: var(--bg-surface-translucent); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="font-size: 1.5rem;">🔑</span>
+            <div>
+                <div style="font-weight: 700; font-size: 0.92rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>Cấu hình Google Gemini API Key</span>
+                    <span id="api-key-status-badge" class="badge badge-neu">Đang kiểm tra...</span>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                    Gán API Key để kích hoạt AI Prompting phân tích chuyên sâu (hoặc dùng miễn phí từ <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--primary); text-decoration: underline;">Google AI Studio</a>)
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; flex: 1; max-width: 480px; min-width: 280px;">
+            <input type="password" id="gemini-api-key-input" class="form-control" style="font-size: 0.85rem;" placeholder="Nhập API Key (AIzaSy...)">
+            <button id="btn-save-api-key" class="btn btn-primary btn-sm" style="white-space: nowrap;">
+                <span>💾</span> Lưu API Key
+            </button>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+            <h2 class="card-title" style="font-size: 1.25rem;">
+                <span>🔬</span> Trình Phân Tích Cảm Xúc Bằng AI & Prompt Định Hướng (Interactive Analyzer)
+            </h2>
+            <p class="card-subtitle">
+                Sử dụng API Key gán trực tiếp để định hướng câu Prompt phân tích sắc thái cảm xúc, điểm số, bóc tách từ ngữ và định vị trên thước đo Spectrum.
+            </p>
+        </div>
+        <span id="inspector-engine-badge" class="badge badge-primary" style="font-size: 0.82rem; padding: 0.35rem 0.85rem;">⚡ AI Ready</span>
+    </div>
+
+    <!-- 2 Column Layout for Interactive Analyzer -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 1.75rem;">
+        
+        <!-- Left Column: Input Text Area, Prompt Mode & Quick Presets -->
+        <div>
+            <!-- Prompt Mode Selector -->
+            <div style="margin-bottom: 1rem; background: var(--bg-surface-translucent); padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-light);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                    <label class="form-label" for="prompt-mode-select" style="font-weight: 700; margin-bottom: 0; font-size: 0.85rem;">
+                        🎯 Chọn Prompt định hướng cảm xúc cho AI:
+                    </label>
+                    <button type="button" id="btn-toggle-prompt-view" style="background: none; border: none; color: var(--primary); font-size: 0.8rem; font-weight: 600; cursor: pointer;">
+                        👁️ Xem / Tùy chỉnh câu Prompt
+                    </button>
+                </div>
+                <select id="prompt-mode-select" class="form-control" style="font-size: 0.88rem; font-weight: 600;">
+                    <option value="general">📊 Phân tích tổng quát & Bóc tách đa chiều (Khuyến nghị)</option>
+                    <option value="negative_focus">🚨 Tập trung cảm xúc Tiêu cực, bức xúc & Tìm lỗi (Negative Focus)</option>
+                    <option value="positive_focus">🌟 Tập trung cảm xúc Tích cực, khen ngợi & Điểm sáng (Positive Focus)</option>
+                </select>
+
+                <!-- Collapsible Custom Prompt Editor -->
+                <div id="prompt-preview-container" style="display: none; margin-top: 0.75rem;">
+                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.25rem;">
+                        Câu Prompt hệ thống sẽ gửi cho AI (Bạn có thể sửa trực tiếp câu prompt này):
+                    </div>
+                    <textarea id="custom-prompt-preview" class="form-control" rows="6" style="font-size: 0.8rem; font-family: monospace;"></textarea>
+                </div>
+            </div>
+
+            <!-- Input Text Area -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                <label class="form-label" for="quick-text-input" style="font-weight: 700; margin-bottom: 0;">
+                    Văn bản đầu vào (Input Text):
+                </label>
+                <span id="quick-word-count" style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted);">
+                    0 từ (0 ký tự)
+                </span>
+            </div>
+
+            <textarea id="quick-text-input" class="form-control" rows="8" style="font-size: 1.05rem; line-height: 1.6; margin-bottom: 1.25rem; resize: vertical;" placeholder="Nhập câu bình luận, bài đánh giá của khách hàng hoặc nội dung bất kỳ bạn muốn phân tích cảm xúc..."></textarea>
+
+            <button id="btn-quick-analyze" class="btn btn-primary btn-lg" style="width: 100%; font-weight: 700;">
+                <span>🚀</span> Phân Tích Cảm Xúc Bằng AI
+            </button>
+        </div>
+
+        <!-- Right Column: Visual Spectrum Inspector (DevToolKit Style + AI Insights) -->
+        <div id="inspector-result-card" style="background: var(--bg-surface-translucent); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+            
+            <!-- Top Status: Emoji + Label + Score -->
+            <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <span id="inspector-emoji" style="font-size: 2.2rem; line-height: 1;">💬</span>
+                        <div>
+                            <div id="inspector-label" style="font-size: 1.35rem; font-weight: 800; color: var(--text-muted);">
+                                Chờ phân tích
+                            </div>
+                            <div id="inspector-score" style="font-size: 0.85rem; color: var(--text-muted); font-family: monospace;">
+                                Score: -- · Comparative: --
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="text-align: right;">
+                        <span id="inspector-aspect-badge" class="badge" style="background: var(--bg-surface); border: 1px solid var(--border-light);">
+                            Khía cạnh: --
+                        </span>
+                        <div id="inspector-stars" style="color: #f59e0b; font-size: 0.88rem; margin-top: 0.25rem;"></div>
+                    </div>
+                </div>
+
+                <!-- SPECTRUM BAR (Gradient Gauge) -->
+                <div class="spectrum-meter-wrapper">
+                    <div class="spectrum-bar">
+                        <div class="spectrum-pointer" id="spectrum-pointer" style="left: 50%;"></div>
+                    </div>
+                    <div class="spectrum-labels">
+                        <span style="color: var(--neg-color);">Rất Tiêu Cực</span>
+                        <span style="color: var(--neu-color);">Trung Tính</span>
+                        <span style="color: var(--pos-color);">Rất Tích Cực</span>
+                    </div>
+                </div>
+
+                <!-- 4 STAT BOXES -->
+                <div class="inspector-stats-grid">
+                    <div class="inspector-stat-box">
+                        <div class="inspector-stat-title">Số từ phân tích</div>
+                        <div class="inspector-stat-value" id="stat-words-analyzed">0</div>
+                    </div>
+                    <div class="inspector-stat-box">
+                        <div class="inspector-stat-title">Khớp từ điển</div>
+                        <div class="inspector-stat-value" id="stat-lexicon-matches">0</div>
+                    </div>
+                    <div class="inspector-stat-box">
+                        <div class="inspector-stat-title">Từ Tích Cực</div>
+                        <div class="inspector-stat-value" id="stat-pos-words" style="color: var(--pos-color);">0</div>
+                    </div>
+                    <div class="inspector-stat-box">
+                        <div class="inspector-stat-title">Từ Tiêu Cực</div>
+                        <div class="inspector-stat-value" id="stat-neg-words" style="color: var(--neg-color);">0</div>
+                    </div>
+                </div>
+
+                <!-- AI REASONING & EMOTION DETAIL -->
+                <div style="background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 0.85rem 1rem; margin-bottom: 0.85rem;">
+                    <div style="font-size: 0.82rem; margin-bottom: 0.35rem;">
+                        <strong>🎭 Sắc thái cảm xúc:</strong> <span id="inspector-emotion-detail" style="font-weight: 600; color: var(--text-muted);">Chờ văn bản</span>
+                    </div>
+                    <div style="font-size: 0.82rem;">
+                        <strong>🧠 Phân tích logic của AI:</strong> <span id="inspector-reasoning" style="color: var(--text-muted);">Vui lòng nhập nội dung ở khung bên trái và bấm "Phân Tích Cảm Xúc Bằng AI".</span>
+                    </div>
+                </div>
+
+                <!-- SENTENCE BREAKDOWN LIST -->
+                <div style="margin-top: 0.75rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                        <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+                            📑 Phân tách từng câu <span id="sentence-breakdown-count">(0)</span>:
+                        </span>
+                    </div>
+                    <div id="sentence-breakdown-list" style="max-height: 120px; overflow-y: auto;">
+                        <div style="text-align: center; color: var(--text-muted); padding: 1.25rem 0; font-size: 0.85rem;">
+                            Chưa có dữ liệu. Vui lòng nhập văn bản và bấm phân tích.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer note -->
+            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-light); font-size: 0.78rem; color: var(--text-muted); display: flex; justify-content: space-between;">
+                <span id="inspector-model-footer">Động cơ: Gemini LLM / NLP Tiếng Việt</span>
+                <span>Phương thức: Prompting theo cảm xúc</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================================
+     PHẦN 2: HƯỚNG DẪN 3 BƯỚC SỬ DỤNG HỆ THỐNG DÀNH CHO BẠN (STEP-BY-STEP GUIDE)
+     ========================================================================= -->
+<div class="card" style="margin-bottom: 2rem; background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-surface-translucent) 100%); border: 1px solid var(--border-light);">
+    <div style="margin-bottom: 1.25rem;">
+        <h2 class="card-title" style="font-size: 1.15rem;">
+            <span>💡</span> Hướng Dẫn Sử Dụng Web App Nhanh (Dành Cho Đồ Án & Doanh Nghiệp)
+        </h2>
+        <p class="card-subtitle">
+            Hệ thống này được xây dựng toàn diện với 3 cấp độ phân tích từ kiểm tra đơn lẻ đến xử lý hàng ngàn đánh giá khách hàng:
+        </p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+        <div style="background: var(--bg-surface); padding: 1.25rem; border-radius: var(--radius-md); border-left: 4px solid var(--primary); box-shadow: var(--shadow-sm);">
+            <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary); margin-bottom: 0.5rem;">Bước 1: Phân Tích Câu Đơn</div>
+            <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5;">
+                Dùng bộ công cụ <strong>Interactive Analyzer</strong> ở ngay phía trên. Nhập trực tiếp bình luận bất kỳ để xem thang đo <em>Spectrum Bar</em>, độ lệch điểm số và bóc tách từng từ tích cực/tiêu cực.
+            </p>
+        </div>
+
+        <div style="background: var(--bg-surface); padding: 1.25rem; border-radius: var(--radius-md); border-left: 4px solid var(--accent-violet); box-shadow: var(--shadow-sm);">
+            <div style="font-size: 1.25rem; font-weight: 800; color: var(--accent-violet); margin-bottom: 0.5rem;">Bước 2: Tải File Hàng Loạt</div>
+            <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5;">
+                Khi bạn có file khảo sát khách hàng (Excel, CSV, Word), kéo thả vào ô bên dưới. AI sẽ <strong>tự động quét sạch ô trống, khử dòng trùng</strong> và phân loại toàn bộ chỉ sau 1 giây.
+            </p>
+        </div>
+
+        <div style="background: var(--bg-surface); padding: 1.25rem; border-radius: var(--radius-md); border-left: 4px solid var(--pos-color); box-shadow: var(--shadow-sm);">
+            <div style="font-size: 1.25rem; font-weight: 800; color: var(--pos-color); margin-bottom: 0.5rem;">Bước 3: Biểu Đồ & Chat Agent</div>
+            <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5;">
+                Sau khi phân tích xong, bạn được xem <strong>biểu đồ tròn/cột/đường linh hoạt</strong>, vào mục <strong>Chat Agent</strong> để hỏi đáp tự nhiên (như ChatGPT về dữ liệu của bạn) và xuất báo cáo gửi Sếp!
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================================
+     BANNER CHUYỂN SANG PHÂN TÍCH TỆP HÀNG LOẠT
+     ========================================================================= -->
+<div class="card" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%); border: 1px solid var(--border-light); margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="font-size: 2.2rem; background: var(--bg-surface); padding: 0.6rem 0.85rem; border-radius: var(--radius-md); border: 1px solid var(--border-light);">
+                📁
+            </div>
+            <div>
+                <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 0.25rem;">
+                    Bạn cần phân tích tập dữ liệu lớn từ Shopee, Lazada hay tệp Excel?
+                </h3>
+                <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0;">
+                    Hệ thống hỗ trợ tải lên tệp <strong>Excel (.xlsx, .xls)</strong>, <strong>CSV</strong>, <strong>Word (.docx)</strong> với tính năng tự động lọc dòng trống, khử trùng lặp và biểu đồ phân tích trực quan.
+                </p>
+            </div>
+        </div>
+        <a href="{{ url_for('analysis.batch_analysis') }}" class="btn btn-primary" style="font-weight: 700; white-space: nowrap;">
+            <span>🚀</span> Mở Phân Tích Theo Tệp ➔
+        </a>
+    </div>
+</div>
+
+<!-- =========================================================================
+     PHẦN 4: CÁC PHIÊN PHÂN TÍCH GẦN ĐÂY CỦA NGƯỜI DÙNG
+     ========================================================================= -->
+{% if recent_sessions %}
+<div class="card" style="margin-top: 2rem;">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">🕒 Các phiên phân tích gần đây của bạn</h2>
+            <p class="card-subtitle">Xem lại lịch sử đánh giá hoặc tiếp tục hỏi đáp với Chat Agent</p>
+        </div>
+        <a href="{{ url_for('analysis.list_sessions') }}" class="btn btn-outline btn-sm">Xem tất cả</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Tên phiên phân tích</th>
+                    <th>Nguồn dữ liệu</th>
+                    <th>Số phản hồi</th>
+                    <th>Tích cực</th>
+                    <th>Tiêu cực</th>
+                    <th>Độ tin cậy</th>
+                    <th>Thời gian</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in recent_sessions %}
+                <tr>
+                    <td style="font-weight: 700;">
+                        <a href="{{ url_for('analysis.view_session', session_id=s.id) }}" style="color: var(--text-main); text-decoration: none;">
+                            {{ s.title }}
+                        </a>
+                    </td>
+                    <td><span class="badge" style="background: var(--bg-surface-translucent);">{{ s.file_type }}</span></td>
+                    <td><strong>{{ s.cleaned_count }}</strong></td>
+                    <td><span class="badge badge-pos">{{ s.positive_count }} ({{ s.to_dict().positive_pct }}%)</span></td>
+                    <td><span class="badge badge-neg">{{ s.negative_count }} ({{ s.to_dict().negative_pct }}%)</span></td>
+                    <td>{{ s.to_dict().avg_confidence }}%</td>
+                    <td style="color: var(--text-muted); font-size: 0.82rem;">{{ s.created_at.strftime('%d/%m/%Y %H:%M') if s.created_at else '' }}</td>
+                    <td>
+                        <div style="display: flex; gap: 0.35rem;">
+                            <a href="{{ url_for('analysis.view_session', session_id=s.id) }}" class="btn btn-primary btn-sm" title="Xem biểu đồ">📊 Xem</a>
+                            <a href="{{ url_for('chat.chat_view', session_id=s.id) }}" class="btn btn-outline btn-sm" title="Chat Agent">💬 Chat</a>
+                            <a href="{{ url_for('report.view_report', session_id=s.id) }}" class="btn btn-outline btn-sm" title="Báo cáo">📑 Báo cáo</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/analysis.js') }}"></script>
+{% endblock %}

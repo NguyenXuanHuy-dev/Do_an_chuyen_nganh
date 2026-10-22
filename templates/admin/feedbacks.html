@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Quản Lý Phản Hồi AI - Admin{% endblock %}
+{% block page_title %}Quản Lý Phản Hồi Đánh Giá AI Từ Người Dùng{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">⭐ Tiếp nhận và xử lý phản hồi câu trả lời AI</h2>
+            <p class="card-subtitle">Theo dõi các đánh giá Like/Dislike từ người dùng để tinh chỉnh mô hình và Prompt</p>
+        </div>
+    </div>
+
+    {% if ratings %}
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">ID</th>
+                    <th>Đánh giá</th>
+                    <th>Góp ý / Nhận xét của người dùng</th>
+                    <th>Mã tin nhắn</th>
+                    <th>Mã phiên</th>
+                    <th>Thời gian gửi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in ratings %}
+                <tr>
+                    <td style="color: var(--text-muted); font-weight: 700;">#{{ r.id }}</td>
+                    <td>
+                        {% if r.rating == 'like' %}
+                        <span class="badge badge-pos">👍 Hữu ích / Hài lòng</span>
+                        {% else %}
+                        <span class="badge badge-neg">👎 Chưa chính xác / Cần cải thiện</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-weight: 500;">
+                        {{ r.feedback_text or 'Không có ghi chú thêm' }}
+                    </td>
+                    <td>#{{ r.message_id or '-' }}</td>
+                    <td>
+                        {% if r.session_id %}
+                        <a href="{{ url_for('analysis.view_session', session_id=r.session_id) }}" style="color: var(--primary); text-decoration: none; font-weight: 600;">
+                            Phiên #{{ r.session_id }}
+                        </a>
+                        {% else %}-{% endif %}
+                    </td>
+                    <td style="color: var(--text-muted); font-size: 0.82rem;">{{ r.created_at.strftime('%d/%m/%Y %H:%M') if r.created_at else '' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+        <div style="font-size: 3rem; margin-bottom: 0.75rem;">⭐</div>
+        <h3>Chưa có phản hồi đánh giá nào</h3>
+        <p style="margin-top: 0.35rem;">Người dùng khi chat với AI có thể bấm Thích / Không thích câu trả lời và dữ liệu sẽ hiển thị tại đây.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

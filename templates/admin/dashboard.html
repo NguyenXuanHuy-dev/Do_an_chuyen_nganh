@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Quản Trị Hệ Thống Cảm Xúc{% endblock %}
+{% block page_title %}Bảng Điều Khiển Quản Trị Hệ Thống (ADMIN){% endblock %}
+
+{% block content %}
+<!-- Admin KPI Metrics -->
+<div class="metrics-grid">
+    <div class="stat-card primary">
+        <div>
+            <div class="stat-value">{{ stats.total_users }}</div>
+            <div class="stat-label">Tổng người dùng ({{ stats.active_users }} hoạt động)</div>
+        </div>
+        <div class="stat-icon">👥</div>
+    </div>
+
+    <div class="stat-card primary">
+        <div>
+            <div class="stat-value">{{ stats.total_sessions }}</div>
+            <div class="stat-label">Tổng phiên phân tích</div>
+        </div>
+        <div class="stat-icon">📁</div>
+    </div>
+
+    <div class="stat-card positive">
+        <div>
+            <div class="stat-value" style="color: var(--pos-color);">{{ stats.total_feedbacks }}</div>
+            <div class="stat-label">Ý kiến đã xử lý</div>
+        </div>
+        <div class="stat-icon">💬</div>
+    </div>
+
+    <div class="stat-card positive">
+        <div>
+            <div class="stat-value" style="color: var(--pos-color);">{{ stats.satisfaction_rate }}%</div>
+            <div class="stat-label">Độ hài lòng câu trả lời AI</div>
+        </div>
+        <div class="stat-icon">⭐</div>
+    </div>
+
+    <div class="stat-card primary">
+        <div>
+            <div class="stat-value">{{ stats.success_rate }}%</div>
+            <div class="stat-label">Tỷ lệ phân tích thành công</div>
+        </div>
+        <div class="stat-icon">🚀</div>
+    </div>
+</div>
+
+<!-- Charts & Summary -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- System Sentiment Chart -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h2 class="card-title">🌐 Tỷ lệ cảm xúc toàn hệ thống</h2>
+                <p class="card-subtitle">Thống kê tích lũy trên toàn bộ dữ liệu phản hồi của khách hàng</p>
+            </div>
+            <span class="badge badge-primary">Toàn hệ thống</span>
+        </div>
+
+        <div style="height: 300px; position: relative;">
+            <canvas id="adminOverviewChart"
+                    data-pos="{{ stats.pos_count }}"
+                    data-neg="{{ stats.neg_count }}"
+                    data-neu="{{ stats.neu_count }}">
+            </canvas>
+        </div>
+    </div>
+
+    <!-- Recent Ratings -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h2 class="card-title">⭐ Đánh giá chất lượng câu trả lời AI gần đây</h2>
+                <p class="card-subtitle">Phản hồi của người dùng giúp tinh chỉnh mô hình</p>
+            </div>
+            <a href="{{ url_for('admin.feedbacks_list') }}" class="btn btn-outline btn-sm">Xem tất cả</a>
+        </div>
+
+        {% if recent_ratings %}
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            {% for r in recent_ratings %}
+            <div style="background: var(--bg-surface-translucent); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <span style="font-size: 1.1rem;">{{ '👍' if r.rating == 'like' else '👎' }}</span>
+                    <span style="font-weight: 600; font-size: 0.88rem; margin-left: 0.5rem;">
+                        {{ r.feedback_text or ('Đánh giá tích cực về câu trả lời' if r.rating == 'like' else 'Cần cải thiện độ chính xác') }}
+                    </span>
+                </div>
+                <span style="font-size: 0.78rem; color: var(--text-muted);">{{ r.created_at.strftime('%d/%m %H:%M') if r.created_at else '' }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; color: var(--text-muted); padding: 2rem 0;">Chưa có phản hồi nào gần đây.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Users Table -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">👤 Người dùng mới tham gia</h2>
+            <p class="card-subtitle">Danh sách tài khoản đăng ký gần đây nhất</p>
+        </div>
+        <a href="{{ url_for('admin.users_list') }}" class="btn btn-primary btn-sm">Quản lý người dùng</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên người dùng</th>
+                    <th>Email</th>
+                    <th>Họ tên</th>
+                    <th>Vai trò</th>
+                    <th>Token đã dùng</th>
+                    <th>Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in recent_users %}
+                <tr>
+                    <td>#{{ u.id }}</td>
+                    <td style="font-weight: 700;">{{ u.username }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.full_name }}</td>
+                    <td>
+                        <span class="badge {{ 'badge-primary' if u.role == 'admin' else '' }}" style="background: var(--bg-surface-translucent);">
+                            {{ u.role }}
+                        </span>
+                    </td>
+                    <td>{{ u.tokens_used }} / {{ u.token_quota }}</td>
+                    <td>
+                        {% if u.is_active %}
+                        <span class="badge badge-pos">Hoạt động</span>
+                        {% else %}
+                        <span class="badge badge-neg">Đã khóa</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

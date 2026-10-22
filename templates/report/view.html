@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Báo cáo phân tích cảm xúc - {{ analysis_session.title }}{% endblock %}
+{% block page_title %}Tự Động Sinh Báo Cáo Phân Tích Chi Tiết{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <a href="{{ url_for('analysis.view_session', session_id=analysis_session.id) }}" style="color: var(--text-muted); text-decoration: none; font-size: 0.88rem; font-weight: 600;">
+            ← Quay lại biểu đồ phiên phân tích
+        </a>
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+            Phiên: <strong>{{ analysis_session.title }}</strong> ({{ analysis_session.cleaned_count }} phản hồi)
+        </div>
+    </div>
+
+    <!-- Actions: Print, Share Public Link -->
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button id="btn-share-link" class="btn btn-outline" style="border-color: var(--primary); color: var(--primary);">
+            <span>🔗</span> Chia sẻ liên kết báo cáo
+        </button>
+        <button onclick="window.print()" class="btn btn-outline">
+            <span>🖨️</span> In / Lưu PDF
+        </button>
+    </div>
+</div>
+
+<!-- Report Style Switcher Tabs -->
+<div class="tabs-nav" style="margin-bottom: 1.5rem;">
+    <a href="{{ url_for('report.view_report', session_id=analysis_session.id, style='bod') }}" 
+       class="tab-btn {% if current_style == 'bod' %}active{% endif %}" style="text-decoration: none;">
+        👔 Báo cáo tóm tắt chỉ số VOC (Dành cho Ban Giám Đốc)
+    </a>
+    <a href="{{ url_for('report.view_report', session_id=analysis_session.id, style='cskh') }}" 
+       class="tab-btn {% if current_style == 'cskh' %}active{% endif %}" style="text-decoration: none;">
+        🛠️ Báo cáo chi tiết danh mục lỗi (Dành cho CSKH / Kỹ thuật)
+    </a>
+</div>
+
+<!-- Share Link Box (Hidden by default) -->
+<div id="share-link-card" class="card card-glass" style="display: none; border-left: 4px solid var(--pos-color); margin-bottom: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <strong style="color: var(--pos-color);">🌐 Liên kết chia sẻ báo cáo công khai:</strong>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Bất kỳ ai có liên kết đều có thể xem mà không cần tài khoản</span>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+        <input type="text" id="share-url-input" class="form-control" readonly>
+        <button id="btn-copy-share" class="btn btn-success" style="min-width: 120px;">Sao chép</button>
+    </div>
+</div>
+
+<!-- Report Content Body -->
+<div class="card" style="padding: 2.5rem; line-height: 1.8; font-size: 0.96rem;">
+    <div class="report-markdown-body">
+        {{ report_content | replace('\n', '<br>') | safe }}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const shareBtn = document.getElementById('btn-share-link');
+    const shareCard = document.getElementById('share-link-card');
+    const shareInput = document.getElementById('share-url-input');
+    const copyBtn = document.getElementById('btn-copy-share');
+
+    if (shareBtn) {
+        shareBtn.addEventListener('click', async () => {
+            try {
+                const resp = await fetch("{{ url_for('report.toggle_share', session_id=analysis_session.id) }}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_public: true })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    shareInput.value = data.share_url;
+                    shareCard.style.display = 'block';
+                    showToast('Đã kích hoạt liên kết chia sẻ công khai!', 'success');
+                }
+            } catch (e) {
+                showToast('Lỗi tạo liên kết', 'danger');
+            }
+        });
+    }
+
+    if (copyBtn && shareInput) {
+        copyBtn.addEventListener('click', () => {
+            shareInput.select();
+            navigator.clipboard.writeText(shareInput.value);
+            showToast('Đã sao chép link vào bộ nhớ tạm!', 'success');
+        });
+    }
+});
+</script>
+{% endblock %}

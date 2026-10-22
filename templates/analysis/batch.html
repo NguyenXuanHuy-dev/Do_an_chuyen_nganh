@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}Phân Tích Theo Tệp & Tập Tin Hàng Loạt - Sentiment AI{% endblock %}
+{% block page_title %}Phân Tích Dữ Liệu Theo Tệp (Batch File Analysis){% endblock %}
+
+{% block content %}
+<!-- Banner Navigation to Single Text Analyzer -->
+<div style="background: var(--bg-surface-translucent); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 0.85rem 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <span style="font-size: 1.35rem;">💡</span>
+        <span style="font-size: 0.9rem; color: var(--text-secondary);">
+            Bạn muốn kiểm tra từng câu đơn hoặc tinh chỉnh câu Prompt định hướng AI?
+        </span>
+    </div>
+    <a href="{{ url_for('analysis.index') }}" class="btn btn-outline btn-sm">
+        <span>🔬</span> Chuyển sang Phân Tích Văn Bản Đơn
+    </a>
+</div>
+
+<!-- =========================================================================
+     PHẦN CHÍNH: TẢI TỆP HÀNG LOẠT (EXCEL / CSV / WORD / TXT) HOẶC DÁN DANH SÁCH
+     ========================================================================= -->
+<div class="card card-glass" style="margin-bottom: 2rem; border-top: 4px solid var(--accent-violet); box-shadow: var(--shadow-lg);">
+    <div class="card-header" style="margin-bottom: 1.25rem;">
+        <div>
+            <h2 class="card-title" style="font-size: 1.35rem; display: flex; align-items: center; gap: 0.5rem;">
+                <span>📁</span> Phân Tích Tập Dữ Liệu Lớn (Tập Tin Hàng Loạt)
+            </h2>
+            <p class="card-subtitle">
+                Tải lên file danh sách đánh giá từ Shopee, Lazada, TikTok Shop, MXH hoặc dán hàng trăm bình luận để hệ thống AI tự động xử lý.
+            </p>
+        </div>
+        <span class="badge badge-primary" style="font-size: 0.85rem; padding: 0.35rem 0.85rem;">
+            ⚡ Tự Động Làm Sạch Dữ Liệu
+        </span>
+    </div>
+
+    <!-- TABS NAVIGATION -->
+    <div class="tabs-nav" style="margin-bottom: 1.5rem;">
+        <button class="tab-btn active" id="tab-btn-file" onclick="switchUploadTab('file')">
+            📂 Tải lên tệp phản hồi (Excel / CSV / Word / TXT)
+        </button>
+        <button class="tab-btn" id="tab-btn-text" onclick="switchUploadTab('text')">
+            ✍️ Dán danh sách nhiều dòng trực tiếp
+        </button>
+    </div>
+
+    <!-- TAB 1: FILE UPLOAD DROPZONE -->
+    <div id="tab-content-file">
+        <div class="upload-dropzone" id="upload-dropzone">
+            <div class="upload-icon">📁</div>
+            <h3 style="font-weight: 700; margin-bottom: 0.35rem; font-size: 1.2rem;">
+                Kéo thả tệp hoặc bấm vào đây để tải lên
+            </h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">
+                Hỗ trợ các định dạng bảng tính và văn bản phổ biến: <strong>Excel (.xlsx, .xls)</strong>, <strong>CSV</strong>, <strong>Word (.docx)</strong> và <strong>TXT</strong>
+            </p>
+            <div style="display: flex; justify-content: center; gap: 0.6rem; margin-top: 1.25rem; flex-wrap: wrap;">
+                <span class="badge" style="background: var(--bg-surface); border: 1px solid var(--border-light); font-size: 0.82rem; padding: 0.35rem 0.75rem;">📊 Excel (.xlsx, .xls)</span>
+                <span class="badge" style="background: var(--bg-surface); border: 1px solid var(--border-light); font-size: 0.82rem; padding: 0.35rem 0.75rem;">📑 CSV (.csv)</span>
+                <span class="badge" style="background: var(--bg-surface); border: 1px solid var(--border-light); font-size: 0.82rem; padding: 0.35rem 0.75rem;">📝 Word (.docx)</span>
+                <span class="badge" style="background: var(--bg-surface); border: 1px solid var(--border-light); font-size: 0.82rem; padding: 0.35rem 0.75rem;">📄 Text (.txt)</span>
+            </div>
+            <input type="file" id="file-input" style="display: none;" accept=".xlsx,.xls,.csv,.docx,.txt">
+        </div>
+
+        <!-- Sample files & Safety note -->
+        <div style="margin-top: 1.25rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap; gap: 0.75rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span>🛡️</span>
+                <span>Hệ thống tự động lọc ô trống, phát hiện dòng trùng lặp và dịch chuẩn hóa teencode.</span>
+            </div>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <a href="/sample-data/csv" class="btn btn-primary btn-sm" title="Tải file CSV kiểm thử">
+                    <span>📑</span> Tải file test CSV (.csv)
+                </a>
+                <a href="/sample-data/txt" class="btn btn-outline btn-sm" title="Tải file TXT kiểm thử">
+                    <span>📄</span> Tải file test TXT (.txt)
+                </a>
+                <a href="/sample-data/cosmetics" class="btn btn-outline btn-sm">
+                    <span>💄</span> Mẫu Excel Mỹ Phẩm (.xlsx)
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: DIRECT MULTI-LINE TEXT INPUT -->
+    <div id="tab-content-text" style="display: none;">
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label" for="direct-title-input" style="font-weight: 700;">
+                Tên phiên phân tích
+            </label>
+            <input type="text" id="direct-title-input" class="form-control" placeholder="Ví dụ: Đánh giá chiến dịch Mỹ phẩm Son lì 2026">
+        </div>
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label class="form-label" for="direct-text-area" style="font-weight: 700;">
+                Danh sách đánh giá (Mỗi dòng một phản hồi của khách hàng)
+            </label>
+            <textarea id="direct-text-area" class="form-control" rows="9" style="font-size: 0.95rem; line-height: 1.6;" placeholder="Nhập hoặc dán các ý kiến của khách hàng vào đây, mỗi dòng là một ý kiến...&#10;Ví dụ:&#10;Chất kem thoa lên mướt mịn cực kỳ, mờ thâm sau 3 ngày 😍&#10;Giao hàng quá lâu, nắp kem bị nứt vỡ bực mình ghê 😡&#10;Chất lượng tạm ổn nhưng giá hơi chát so với dung tích"></textarea>
+        </div>
+        <button id="btn-process-direct" class="btn btn-primary btn-lg" style="width: 100%; font-weight: 700;">
+            <span>⚡</span> Bắt đầu phân tích toàn bộ danh sách
+        </button>
+    </div>
+</div>
+
+<!-- =========================================================================
+     MODAL: KIỂM TRA DỮ LIỆU & LÀM SẠCH TỰ ĐỘNG
+     ========================================================================= -->
+<div class="modal-overlay" id="clean-preview-modal">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <h3 style="font-weight: 800; font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                <span>🧹</span> Kiểm tra dữ liệu & Làm sạch tự động
+            </h3>
+            <button id="btn-close-modal" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: var(--text-muted);">✕</button>
+        </div>
+
+        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 1rem;">
+            Tệp đã tải lên: <strong id="modal-file-name" style="color: var(--primary);"></strong>
+        </p>
+
+        <!-- Error Diagnosis Stats -->
+        <div class="metrics-grid" style="grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1.25rem;">
+            <div style="background: var(--bg-surface-translucent); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-light);">
+                <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Tổng số dòng phát hiện</div>
+                <div style="font-size: 1.35rem; font-weight: 800;" id="modal-total-rows">0</div>
+            </div>
+            <div style="background: var(--bg-surface-translucent); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-light);">
+                <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Dòng dữ liệu hợp lệ</div>
+                <div style="font-size: 1.35rem; font-weight: 800; color: var(--pos-color);" id="modal-clean-rows">0</div>
+            </div>
+            <div style="background: var(--neg-bg); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--neg-border);">
+                <div style="font-size: 0.75rem; color: var(--neg-color); font-weight: 600;">Dòng trống / Ký tự rác</div>
+                <div style="font-size: 1.35rem; font-weight: 800; color: var(--neg-color);" id="modal-empty-rows">0</div>
+            </div>
+            <div style="background: var(--neu-bg); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--neu-border);">
+                <div style="font-size: 0.75rem; color: var(--neu-color); font-weight: 600;">Dòng trùng lặp nội dung</div>
+                <div style="font-size: 1.35rem; font-weight: 800; color: var(--neu-color);" id="modal-duplicate-rows">0</div>
+            </div>
+        </div>
+
+        <!-- Cleaning Options -->
+        <div style="background: var(--bg-surface-translucent); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.25rem;">
+            <div style="font-weight: 700; font-size: 0.88rem; margin-bottom: 0.65rem;">Tùy chọn xử lý rác trước khi phân tích:</div>
+            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; margin-bottom: 0.4rem; cursor: pointer;">
+                <input type="checkbox" id="chk-clean-empty" checked>
+                <span>Tự động loại bỏ các ô trống và ký tự vô nghĩa</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; cursor: pointer;">
+                <input type="checkbox" id="chk-clean-duplicates" checked>
+                <span>Tự động khử các đánh giá bị lặp lại (Deduplicate)</span>
+            </label>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label" for="session-title-input" style="font-weight: 700;">Đặt tên phiên phân tích</label>
+            <input type="text" id="session-title-input" class="form-control" placeholder="Ví dụ: Đánh giá Mỹ Phẩm Shopee Tháng 10/2026">
+        </div>
+
+        <div style="margin-bottom: 1.25rem;">
+            <div style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--text-secondary);">
+                Xem trước các dòng dữ liệu sau khi chuẩn hóa teencode:
+            </div>
+            <ul id="modal-preview-samples" style="list-style: none; max-height: 160px; overflow-y: auto; padding: 0.5rem; background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md);"></ul>
+        </div>
+
+        <button id="btn-confirm-process" class="btn btn-primary btn-lg" style="width: 100%; font-weight: 700;">
+            🚀 Bắt đầu phân tích ngay
+        </button>
+    </div>
+</div>
+
+<!-- =========================================================================
+     PHẦN CÁC PHIÊN PHÂN TÍCH GẦN ĐÂY
+     ========================================================================= -->
+{% if recent_sessions %}
+<div class="card" style="margin-top: 2rem;">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">🕒 Các phiên phân tích tệp gần đây</h2>
+            <p class="card-subtitle">Xem lại báo cáo, tương tác với Chat Agent hoặc tải lại dữ liệu đã xử lý</p>
+        </div>
+        <a href="{{ url_for('analysis.list_sessions') }}" class="btn btn-outline btn-sm">Xem tất cả lịch sử</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Tên phiên phân tích</th>
+                    <th>Nguồn tệp</th>
+                    <th>Số phản hồi</th>
+                    <th>Tích cực</th>
+                    <th>Tiêu cực</th>
+                    <th>Độ tin cậy</th>
+                    <th>Thời gian</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in recent_sessions %}
+                <tr>
+                    <td style="font-weight: 700;">
+                        <a href="{{ url_for('analysis.view_session', session_id=s.id) }}" style="color: var(--text-main); text-decoration: none;">
+                            {{ s.title }}
+                        </a>
+                    </td>
+                    <td><span class="badge" style="background: var(--bg-surface-translucent);">{{ s.file_type }}</span></td>
+                    <td><strong>{{ s.cleaned_count }}</strong></td>
+                    <td><span class="badge badge-pos">{{ s.positive_count }} ({{ s.to_dict().positive_pct }}%)</span></td>
+                    <td><span class="badge badge-neg">{{ s.negative_count }} ({{ s.to_dict().negative_pct }}%)</span></td>
+                    <td>{{ s.to_dict().avg_confidence }}%</td>
+                    <td style="color: var(--text-muted); font-size: 0.82rem;">{{ s.created_at.strftime('%d/%m/%Y %H:%M') if s.created_at else '' }}</td>
+                    <td>
+                        <div style="display: flex; gap: 0.35rem;">
+                            <a href="{{ url_for('analysis.view_session', session_id=s.id) }}" class="btn btn-primary btn-sm" title="Xem biểu đồ">📊 Xem</a>
+                            <a href="{{ url_for('chat.chat_view', session_id=s.id) }}" class="btn btn-outline btn-sm" title="Chat Agent">💬 Chat</a>
+                            <a href="{{ url_for('report.view_report', session_id=s.id) }}" class="btn btn-outline btn-sm" title="Báo cáo">📑 Báo cáo</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/analysis.js') }}"></script>
+<script>
+function switchUploadTab(tab) {
+    const tabFile = document.getElementById('tab-content-file');
+    const tabText = document.getElementById('tab-content-text');
+    const btnFile = document.getElementById('tab-btn-file');
+    const btnText = document.getElementById('tab-btn-text');
+
+    if (tab === 'file') {
+        tabFile.style.display = 'block';
+        tabText.style.display = 'none';
+        btnFile.classList.add('active');
+        btnText.classList.remove('active');
+    } else {
+        tabFile.style.display = 'none';
+        tabText.style.display = 'block';
+        btnFile.classList.remove('active');
+        btnText.classList.add('active');
+    }
+}
+</script>
+{% endblock %}

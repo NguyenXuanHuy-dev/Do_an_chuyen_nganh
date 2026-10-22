@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Hồ Sơ Cá Nhân & Quản Lý Tài Nguyên{% endblock %}
+{% block page_title %}Hồ Sơ Cá Nhân & Quản Lý Token{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <!-- Resource / Token Quota Card -->
+    <div class="card card-glass" style="margin-bottom: 2rem; border-left: 4px solid var(--primary);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div>
+                <h2 class="card-title">⚡ Gói tài nguyên & Dung lượng Token</h2>
+                <p class="card-subtitle">Theo dõi hạn mức phân tích văn bản và phản hồi khách hàng</p>
+            </div>
+            <span class="badge badge-pos">Gói Tiêu chuẩn</span>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 700; margin-bottom: 0.5rem;">
+            <span>Đã sử dụng: {{ user.tokens_used }} tokens</span>
+            <span>Hạn mức: {{ user.token_quota }} tokens</span>
+        </div>
+
+        <!-- Progress bar -->
+        {% set quota = user.token_quota if (user.token_quota and user.token_quota > 0) else 1 %}
+        {% set pct = [((user.tokens_used / quota) * 100) | round(1), 100] | min %}
+        <div style="height: 12px; background: var(--border-light); border-radius: var(--radius-full); overflow: hidden; margin-bottom: 0.75rem;">
+            <div style="height: 100%; width: {{ pct }}%; background: linear-gradient(90deg, var(--primary), var(--accent-violet)); border-radius: var(--radius-full); transition: width 0.4s ease;"></div>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; justify-content: space-between;">
+            <span>Đã dùng {{ pct }}% tổng tài nguyên được cấp</span>
+            <span>Còn lại: {{ user.token_quota - user.tokens_used }} tokens</span>
+        </div>
+    </div>
+
+    <!-- Profile Information & Password Change -->
+    <div class="card">
+        <h2 class="card-title" style="margin-bottom: 1.5rem;">👤 Cập nhật thông tin tài khoản</h2>
+
+        <form method="POST" action="{{ url_for('auth.profile') }}">
+            <div class="form-group">
+                <label class="form-label" for="username">Tên đăng nhập (Cố định)</label>
+                <input type="text" id="username" class="form-control" value="{{ user.username }}" disabled style="opacity: 0.7;">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="email">Địa chỉ Email</label>
+                <input type="email" id="email" class="form-control" value="{{ user.email }}" disabled style="opacity: 0.7;">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="full_name">Họ và tên hiển thị</label>
+                <input type="text" id="full_name" name="full_name" class="form-control" value="{{ user.full_name }}" required>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid var(--border-light); margin: 2rem 0;">
+
+            <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 1rem;">🔒 Đổi mật khẩu đăng nhập</h3>
+
+            <div class="form-group">
+                <label class="form-label" for="current_password">Mật khẩu hiện tại</label>
+                <input type="password" id="current_password" name="current_password" class="form-control" placeholder="Nhập mật khẩu hiện tại nếu muốn đổi mật khẩu">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="new_password">Mật khẩu mới</label>
+                <input type="password" id="new_password" name="new_password" class="form-control" placeholder="Tối thiểu 6 ký tự">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
+                Lưu thay đổi hồ sơ
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

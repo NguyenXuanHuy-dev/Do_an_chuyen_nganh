@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Hệ Thống Phân Tích Cảm Xúc Khách Hàng{% endblock %} - Sentiment AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Chart.js CDN for dynamic visual data charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="app-layout">
+        {% if session.get('user_id') %}
+        <!-- Sidebar Navigation -->
+        <aside class="app-sidebar">
+            <div class="sidebar-header">
+                <a href="{{ url_for('analysis.index') }}" class="brand-logo">
+                    <div class="brand-icon">✨</div>
+                    <div>
+                        <span style="font-weight: 800; letter-spacing: -0.02em;">Sentiment</span><span style="color: var(--primary);">AI</span>
+                    </div>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Chức năng chính</div>
+                <a href="{{ url_for('analysis.index') }}" class="nav-item {% if request.endpoint == 'analysis.index' %}active{% endif %}">
+                    <span class="icon">🔬</span>
+                    <span>Phân tích văn bản</span>
+                </a>
+                <a href="{{ url_for('analysis.batch_analysis') }}" class="nav-item {% if request.endpoint == 'analysis.batch_analysis' %}active{% endif %}">
+                    <span class="icon">📁</span>
+                    <span>Phân tích theo tệp</span>
+                </a>
+                <a href="{{ url_for('analysis.list_sessions') }}" class="nav-item {% if request.endpoint == 'analysis.list_sessions' %}active{% endif %}">
+                    <span class="icon">📜</span>
+                    <span>Lịch sử phân tích</span>
+                </a>
+
+                {% if session.get('role') == 'admin' %}
+                <div class="nav-section-title">Quản trị hệ thống</div>
+                <a href="{{ url_for('admin.dashboard') }}" class="nav-item {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                    <span class="icon">📈</span>
+                    <span>Thống kê Admin</span>
+                </a>
+                <a href="{{ url_for('admin.users_list') }}" class="nav-item {% if request.endpoint == 'admin.users_list' %}active{% endif %}">
+                    <span class="icon">👥</span>
+                    <span>Quản lý người dùng</span>
+                </a>
+                <a href="{{ url_for('admin.prompts_list') }}" class="nav-item {% if request.endpoint == 'admin.prompts_list' %}active{% endif %}">
+                    <span class="icon">💬</span>
+                    <span>Cấu hình Prompt mẫu</span>
+                </a>
+                <a href="{{ url_for('admin.feedbacks_list') }}" class="nav-item {% if request.endpoint == 'admin.feedbacks_list' %}active{% endif %}">
+                    <span class="icon">⭐</span>
+                    <span>Đánh giá AI</span>
+                </a>
+                {% endif %}
+
+                <div class="nav-section-title">Tài khoản</div>
+                <a href="{{ url_for('auth.profile') }}" class="nav-item {% if request.endpoint == 'auth.profile' %}active{% endif %}">
+                    <span class="icon">👤</span>
+                    <span>Hồ sơ cá nhân</span>
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="nav-item" style="color: var(--neg-color);">
+                    <span class="icon">🚪</span>
+                    <span>Đăng xuất</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-badge">
+                    <div class="user-avatar" style="overflow: hidden; padding: 0;">
+                        {% if session.get('avatar_url') %}
+                        <img src="{{ session.get('avatar_url') }}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                        {{ session.get('username', 'U')[0].upper() }}
+                        {% endif %}
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">{{ session.get('full_name', session.get('username')) }}</span>
+                        <span class="user-role">
+                            {% if session.get('auth_provider') == 'google' %}
+                            <span style="color: #4285F4; font-weight: 700;">Google Account</span>
+                            {% elif session.get('role') == 'admin' %}
+                            Quản trị viên
+                            {% else %}
+                            Khách hàng
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        {% endif %}
+
+        <!-- Main Content Area -->
+        <main class="app-main" style="{% if not session.get('user_id') %}margin-left: 0;{% endif %}">
+            <!-- Topbar Header -->
+            <header class="app-topbar">
+                <div class="topbar-left">
+                    {% if session.get('user_id') %}
+                    <button class="icon-btn" id="mobile-menu-btn" style="display: none;">☰</button>
+                    {% endif %}
+                    <h1 class="page-title">
+                        {% block page_title %}Hệ thống phân tích cảm xúc khách hàng từ văn bản{% endblock %}
+                    </h1>
+                </div>
+
+                <div class="topbar-actions">
+                    <button class="theme-toggle-btn" id="theme-toggle-btn" title="Chuyển chế độ Sáng / Tối">
+                        <span id="theme-icon">🌙</span>
+                    </button>
+                    {% if not session.get('user_id') %}
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-sm">Đăng nhập</a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Đăng ký</a>
+                    {% endif %}
+                </div>
+            </header>
+
+            <!-- Flash Alert Messages -->
+            <div style="padding: 1rem 2rem 0;">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="toast toast-{{ category }} alert-dismissible" style="position: static; margin-bottom: 0.75rem; box-shadow: none;">
+                                <span>{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- Page Body -->
+            <div class="content-wrapper">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

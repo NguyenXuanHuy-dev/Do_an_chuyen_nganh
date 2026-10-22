@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Lịch sử các phiên phân tích cảm xúc{% endblock %}
+{% block page_title %}Lịch sử các phiên phân tích{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">📁 Danh sách các phiên phân tích đã lưu</h2>
+            <p class="card-subtitle">Xem lại, tiếp tục hỏi đáp với Chat Agent hoặc tải báo cáo</p>
+        </div>
+        <a href="{{ url_for('analysis.index') }}" class="btn btn-primary btn-sm">
+            <span>➕</span> Tạo phiên phân tích mới
+        </a>
+    </div>
+
+    {% if sessions %}
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">ID</th>
+                    <th>Tên phiên phân tích</th>
+                    <th>Nguồn dữ liệu</th>
+                    <th>Số ý kiến</th>
+                    <th>Tích cực (%)</th>
+                    <th>Tiêu cực (%)</th>
+                    <th>Độ tin cậy</th>
+                    <th>Thời gian tạo</th>
+                    <th style="text-align: right;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in sessions %}
+                <tr>
+                    <td style="color: var(--text-muted); font-weight: 700;">#{{ s.id }}</td>
+                    <td style="font-weight: 700;">
+                        <a href="{{ url_for('analysis.view_session', session_id=s.id) }}" style="color: var(--primary); text-decoration: none;">
+                            {{ s.title }}
+                        </a>
+                    </td>
+                    <td><span class="badge" style="background: var(--bg-surface-translucent);">{{ s.file_type }}</span></td>
+                    <td><strong>{{ s.cleaned_count }}</strong></td>
+                    <td><span class="badge badge-pos">{{ s.positive_count }} ({{ s.to_dict().positive_pct }}%)</span></td>
+                    <td><span class="badge badge-neg">{{ s.negative_count }} ({{ s.to_dict().negative_pct }}%)</span></td>
+                    <td>{{ s.to_dict().avg_confidence }}%</td>
+                    <td style="color: var(--text-muted); font-size: 0.82rem;">{{ s.created_at.strftime('%d/%m/%Y %H:%M') if s.created_at else '' }}</td>
+                    <td style="text-align: right;">
+                        <div style="display: inline-flex; gap: 0.35rem;">
+                            <a href="{{ url_for('analysis.view_session', session_id=s.id) }}" class="btn btn-primary btn-sm" title="Xem chi tiết & biểu đồ">📊 Xem</a>
+                            <a href="{{ url_for('chat.chat_view', session_id=s.id) }}" class="btn btn-outline btn-sm" title="Hỏi đáp AI Chat Agent">💬 Chat</a>
+                            <a href="{{ url_for('report.view_report', session_id=s.id) }}" class="btn btn-outline btn-sm" title="Xem báo cáo">📑 Báo cáo</a>
+                            <form action="{{ url_for('analysis.delete_session', session_id=s.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa phiên phân tích này?');">
+                                <button type="submit" class="btn btn-danger btn-sm" title="Xóa phiên">🗑️</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 3rem 1rem;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+        <h3>Bạn chưa có phiên phân tích nào</h3>
+        <p style="color: var(--text-muted); margin-top: 0.5rem; margin-bottom: 1.5rem;">
+            Tải lên tệp Excel phản hồi hoặc dán đoạn văn bản để bắt đầu phân tích cảm xúc ngay.
+        </p>
+        <a href="{{ url_for('analysis.index') }}" class="btn btn-primary">
+            <span>🚀</span> Bắt đầu phiên phân tích đầu tiên
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

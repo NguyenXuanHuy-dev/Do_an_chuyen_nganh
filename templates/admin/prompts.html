@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Cấu Hình Prompt Mẫu AI - Admin{% endblock %}
+{% block page_title %}Cấu Hình Prompt Mẫu Định Hướng AI{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">💬 Danh sách Prompt mẫu của hệ thống</h2>
+            <p class="card-subtitle">Admin cập nhật các câu Prompt mẫu để định hướng AI phân tích và trả lời chuẩn xác hơn</p>
+        </div>
+        <button id="btn-add-prompt" class="btn btn-primary btn-sm">
+            <span>➕</span> Thêm Prompt mẫu mới
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">ID</th>
+                    <th>Tiêu đề gợi ý</th>
+                    <th>Nội dung câu Prompt gửi AI</th>
+                    <th>Danh mục</th>
+                    <th>Mô tả</th>
+                    <th style="text-align: right;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in prompts %}
+                <tr>
+                    <td style="color: var(--text-muted); font-weight: 700;">#{{ p.id }}</td>
+                    <td style="font-weight: 700;">{{ p.title }}</td>
+                    <td style="max-width: 320px; font-size: 0.88rem; color: var(--text-secondary);">
+                        <em>"{{ p.prompt_text }}"</em>
+                    </td>
+                    <td><span class="badge badge-primary">{{ p.category }}</span></td>
+                    <td style="color: var(--text-muted); font-size: 0.82rem;">{{ p.description }}</td>
+                    <td style="text-align: right;">
+                        <button class="btn btn-sm btn-danger btn-delete-prompt" data-prompt-id="{{ p.id }}">
+                            Xóa
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Add / Edit Prompt -->
+<div class="modal-overlay" id="prompt-modal">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <h3 style="font-weight: 800; font-size: 1.25rem;">💬 Thêm / Chỉnh sửa Prompt Mẫu</h3>
+            <button id="btn-close-prompt-modal" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: var(--text-muted);">✕</button>
+        </div>
+
+        <input type="hidden" id="prompt-id">
+
+        <div class="form-group">
+            <label class="form-label" for="prompt-title">Tiêu đề nút bấm (Hiển thị cho User)</label>
+            <input type="text" id="prompt-title" class="form-control" placeholder="Ví dụ: Tóm tắt 3 vấn đề nhức nhối">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="prompt-text">Nội dung câu Prompt định hướng AI</label>
+            <textarea id="prompt-text" class="form-control" rows="4" placeholder="Hãy phân tích tập dữ liệu và chỉ ra 3 điểm nghẽn tiêu cực nhất..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="prompt-desc">Ghi chú mô tả mục đích</label>
+            <input type="text" id="prompt-desc" class="form-control" placeholder="Dùng cho chat agent hỏi đáp nhanh">
+        </div>
+
+        <button id="btn-save-prompt" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 1rem;">
+            Lưu Prompt mẫu
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

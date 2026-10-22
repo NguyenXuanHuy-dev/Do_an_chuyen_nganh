@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Chat Agent - {{ analysis_session.title }}{% endblock %}
+{% block page_title %}Tương tác Hỏi - Đáp Tự Nhiên (Chat Agent){% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+    <div>
+        <a href="{{ url_for('analysis.view_session', session_id=analysis_session.id) }}" style="color: var(--text-muted); text-decoration: none; font-size: 0.88rem; font-weight: 600;">
+            ← Quay lại biểu đồ phân tích
+        </a>
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+            Đang trò chuyện với dữ liệu phiên: <strong>{{ analysis_session.title }}</strong> ({{ analysis_session.cleaned_count }} phản hồi)
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 0.5rem;">
+        <span class="badge badge-pos">😊 {{ analysis_session.positive_count }} Tích cực</span>
+        <span class="badge badge-neg">😡 {{ analysis_session.negative_count }} Tiêu cực</span>
+        <span class="badge badge-neu">😐 {{ analysis_session.neutral_count }} Trung tính</span>
+    </div>
+</div>
+
+<div class="chat-container" data-session-id="{{ analysis_session.id }}">
+    <!-- Messages Scroll Area -->
+    <div class="chat-messages" id="chat-messages-area">
+        <!-- Initial Welcome Message -->
+        <div class="chat-bubble assistant">
+            <div class="message-content">
+                <p>👋 Xin chào! Tôi là <strong>Chat Agent AI</strong> hỗ trợ phân tích tập dữ liệu cảm xúc <strong>"{{ analysis_session.title }}"</strong>.</p>
+                <p style="margin-top: 0.5rem;">Tôi có thể giúp bạn giải đáp các thắc mắc như:</p>
+                <ul style="margin-left: 1.25rem; margin-top: 0.35rem; font-size: 0.9rem;">
+                    <li>Khách hàng phàn nàn điều gì nhiều nhất?</li>
+                    <li>Khía cạnh giao hàng, giá cả hoặc dịch vụ được đánh giá ra sao?</li>
+                    <li>Trích xuất các lời khen tích cực nhất từ khách hàng.</li>
+                    <li>Đề xuất các bước hành động cải thiện chất lượng dịch vụ.</li>
+                </ul>
+                <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
+                    👉 Bạn có thể bấm vào các câu hỏi gợi ý bên dưới hoặc tự nhập câu hỏi vào khung chat!
+                </p>
+            </div>
+            <div style="margin-top: 0.5rem; font-size: 0.75rem; opacity: 0.8;">🤖 AI Phân Tích</div>
+        </div>
+
+        <!-- Render Previous Chat Messages from Database -->
+        {% for msg in messages %}
+        <div class="chat-bubble {{ msg.role }}">
+            <div class="message-content">
+                {{ msg.content | replace('\n', '<br>') | safe }}
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; font-size: 0.75rem; opacity: 0.8;">
+                <span>{{ 'Bạn' if msg.role == 'user' else '🤖 AI Phân Tích' }}</span>
+                {% if msg.role == 'assistant' %}
+                <div class="rating-actions" style="display: flex; gap: 0.35rem;">
+                    <button class="btn-rate" data-id="{{ msg.id }}" data-rate="like" title="Hữu ích" style="background: none; border: none; cursor: pointer;">👍</button>
+                    <button class="btn-rate" data-id="{{ msg.id }}" data-rate="dislike" title="Chưa chính xác" style="background: none; border: none; cursor: pointer;">👎</button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Suggested Quick Prompts Bar -->
+    <div class="chat-prompt-chips">
+        <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); align-self: center; margin-right: 0.25rem;">
+            💡 Câu hỏi gợi ý:
+        </span>
+        {% for p in prompts %}
+        <button class="prompt-chip" data-prompt-text="{{ p.prompt_text }}">
+            {{ p.title }}
+        </button>
+        {% endfor %}
+    </div>
+
+    <!-- Message Input Bar -->
+    <div class="chat-input-area">
+        <input type="text" id="chat-input-text" class="form-control" placeholder="Nhập câu hỏi của bạn về dữ liệu cảm xúc... (Nhấn Enter để gửi)">
+        <button id="chat-send-btn" class="btn btn-primary" style="min-width: 110px;">
+            <span>Gửi</span> <span>➤</span>
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/chat_agent.js') }}"></script>
+{% endblock %}

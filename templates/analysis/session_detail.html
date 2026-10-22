@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}{{ analysis_session.title }} - Chi tiết phân tích{% endblock %}
+{% block page_title %}{{ analysis_session.title }}{% endblock %}
+
+{% block content %}
+<!-- Top Action Toolbar -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <a href="{{ url_for('analysis.list_sessions') }}" style="color: var(--text-muted); text-decoration: none; font-size: 0.88rem; font-weight: 600;">
+            ← Quay lại danh sách phiên
+        </a>
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+            Tệp: <strong>{{ analysis_session.file_name or 'Trực tiếp' }}</strong> | Thời gian: {{ analysis_session.created_at.strftime('%d/%m/%Y %H:%M') if analysis_session.created_at else '' }}
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <a href="{{ url_for('chat.chat_view', session_id=analysis_session.id) }}" class="btn btn-primary">
+            <span>💬</span> Hỏi đáp Chat Agent
+        </a>
+        <a href="{{ url_for('report.view_report', session_id=analysis_session.id) }}" class="btn btn-outline">
+            <span>📑</span> Xem báo cáo chi tiết
+        </a>
+        <a href="{{ url_for('analysis.export_session', session_id=analysis_session.id) }}" class="btn btn-outline">
+            <span>📥</span> Xuất Excel
+        </a>
+    </div>
+</div>
+
+<!-- KPI Metrics Grid -->
+<div class="metrics-grid">
+    <div class="stat-card primary">
+        <div>
+            <div class="stat-value">{{ analysis_session.cleaned_count }}</div>
+            <div class="stat-label">Tổng ý kiến phân tích</div>
+        </div>
+        <div class="stat-icon">📊</div>
+    </div>
+
+    <div class="stat-card positive">
+        <div>
+            <div class="stat-value" style="color: var(--pos-color);">
+                {{ analysis_session.to_dict().positive_pct }}%
+            </div>
+            <div class="stat-label">Tích cực ({{ analysis_session.positive_count }})</div>
+        </div>
+        <div class="stat-icon">😊</div>
+    </div>
+
+    <div class="stat-card negative">
+        <div>
+            <div class="stat-value" style="color: var(--neg-color);">
+                {{ analysis_session.to_dict().negative_pct }}%
+            </div>
+            <div class="stat-label">Tiêu cực ({{ analysis_session.negative_count }})</div>
+        </div>
+        <div class="stat-icon">😡</div>
+    </div>
+
+    <div class="stat-card neutral">
+        <div>
+            <div class="stat-value" style="color: var(--neu-color);">
+                {{ analysis_session.to_dict().neutral_pct }}%
+            </div>
+            <div class="stat-label">Trung tính ({{ analysis_session.neutral_count }})</div>
+        </div>
+        <div class="stat-icon">😐</div>
+    </div>
+
+    <div class="stat-card primary">
+        <div>
+            <div class="stat-value">{{ analysis_session.to_dict().avg_confidence }}%</div>
+            <div class="stat-label">Độ tin cậy mô hình</div>
+        </div>
+        <div class="stat-icon">🎯</div>
+    </div>
+</div>
+
+<!-- Visual Data Charts Section with Dynamic Switcher -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- Sentiment Distribution Chart Card -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h2 class="card-title">📈 Phân bổ cảm xúc tổng quát</h2>
+                <p class="card-subtitle">Chuyển đổi linh hoạt giữa biểu đồ tròn, cột hoặc đường</p>
+            </div>
+            <!-- Dynamic Chart Switcher Buttons -->
+            <div style="display: flex; gap: 0.35rem; background: var(--bg-surface-translucent); padding: 0.25rem; border-radius: var(--radius-md);">
+                <button class="btn btn-sm btn-outline chart-switch-btn active" data-chart-type="doughnut" title="Biểu đồ tròn">
+                    Tròn
+                </button>
+                <button class="btn btn-sm btn-outline chart-switch-btn" data-chart-type="bar" title="Biểu đồ cột">
+                    Cột
+                </button>
+                <button class="btn btn-sm btn-outline chart-switch-btn" data-chart-type="line" title="Biểu đồ đường">
+                    Đường
+                </button>
+            </div>
+        </div>
+
+        <div style="height: 320px; position: relative;">
+            <canvas id="sentimentDistributionChart" 
+                    data-positive="{{ analysis_session.positive_count }}"
+                    data-negative="{{ analysis_session.negative_count }}"
+                    data-neutral="{{ analysis_session.neutral_count }}">
+            </canvas>
+        </div>
+    </div>
+
+    <!-- Aspect Breakdown Chart Card -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h2 class="card-title">🏷️ Phân bổ theo khía cạnh (Aspect-Based)</h2>
+                <p class="card-subtitle">Sắc thái cảm xúc theo từng khâu vận hành & sản phẩm</p>
+            </div>
+            <span class="badge badge-primary">Chi tiết khía cạnh</span>
+        </div>
+
+        <div style="height: 320px; position: relative;">
+            <canvas id="aspectBreakdownChart" 
+                    data-aspect-json='{{ aspect_counts | tojson }}'>
+            </canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Feedback Items Data Table -->
+<div class="card">
+    <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2 class="card-title">📋 Chi tiết danh sách phản hồi & Nhãn cảm xúc</h2>
+            <p class="card-subtitle">Hiển thị toàn bộ dữ liệu đã được AI chuẩn hóa teencode và phân loại</p>
+        </div>
+
+        <!-- Filter Controls -->
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+            <input type="text" id="table-search-input" class="form-control" style="width: 220px;" placeholder="🔍 Tìm kiếm bình luận...">
+            
+            <select id="filter-sentiment-select" class="form-control" style="width: 140px;">
+                <option value="all">Tất cả cảm xúc</option>
+                <option value="Tích cực">Tích cực</option>
+                <option value="Tiêu cực">Tiêu cực</option>
+                <option value="Trung tính">Trung tính</option>
+            </select>
+
+            <select id="filter-aspect-select" class="form-control" style="width: 140px;">
+                <option value="all">Tất cả khía cạnh</option>
+                <option value="Chất lượng">Chất lượng</option>
+                <option value="Giá cả">Giá cả</option>
+                <option value="Dịch vụ">Dịch vụ</option>
+                <option value="Giao hàng">Giao hàng</option>
+                <option value="Bao bì">Bao bì</option>
+                <option value="Khác">Khác</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>Nội dung gốc</th>
+                    <th>Văn bản chuẩn hóa NLP</th>
+                    <th>Cảm xúc</th>
+                    <th>Khía cạnh</th>
+                    <th>Độ tin cậy</th>
+                    <th>Số sao</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr class="feedback-row" 
+                    data-text="{{ item.original_text }}" 
+                    data-sentiment="{{ item.sentiment }}" 
+                    data-aspect="{{ item.aspect }}">
+                    <td style="color: var(--text-muted); font-size: 0.82rem;">{{ loop.index }}</td>
+                    <td style="max-width: 280px; font-weight: 500;">{{ item.original_text }}</td>
+                    <td style="max-width: 280px; color: var(--text-secondary); font-size: 0.86rem;">
+                        <em>{{ item.cleaned_text }}</em>
+                    </td>
+                    <td>
+                        {% if item.sentiment == 'Tích cực' %}
+                        <span class="badge badge-pos">😊 Tích cực</span>
+                        {% elif item.sentiment == 'Tiêu cực' %}
+                        <span class="badge badge-neg">😡 Tiêu cực</span>
+                        {% else %}
+                        <span class="badge badge-neu">😐 Trung tính</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge" style="background: var(--bg-surface-translucent); border: 1px solid var(--border-light);">
+                            {{ item.aspect }}
+                        </span>
+                    </td>
+                    <td style="font-weight: 700; font-size: 0.88rem;">{{ (item.confidence * 100) | round(1) }}%</td>
+                    <td style="color: #f59e0b; font-size: 0.85rem; letter-spacing: 0.1em;">
+                        {{ "⭐" * item.rating_star }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/analysis.js') }}"></script>
+{% endblock %}
