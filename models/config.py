@@ -8,7 +8,7 @@ class PromptTemplate(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(Unicode(200), nullable=False)
     prompt_text = Column(UnicodeText, nullable=False)
-    category = Column(String(50), default='chat')  # 'chat', 'report_bod', 'report_cskh', 'aspect'
+    category = Column(Unicode(50), default='chat')  # 'chat', 'report_bod', 'report_cskh', 'aspect'
     description = Column(Unicode(255), default='')
     is_default = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
@@ -28,9 +28,9 @@ class SystemSetting(Base):
     __tablename__ = 'system_settings'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    setting_key = Column(String(100), unique=True, nullable=False, index=True)
-    setting_value = Column(Text, default='')
-    description = Column(String(255), default='')
+    setting_key = Column(Unicode(100), unique=True, nullable=False, index=True)
+    setting_value = Column(UnicodeText, default='')
+    description = Column(Unicode(255), default='')
 
     def to_dict(self):
         return {

@@ -11,7 +11,7 @@ class AnalysisSession(Base):
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     title = Column(Unicode(250), nullable=False)
     file_name = Column(Unicode(255), default='')
-    file_type = Column(String(50), default='manual')  # 'xlsx', 'csv', 'docx', 'txt', 'manual'
+    file_type = Column(Unicode(50), default='manual')  # 'xlsx', 'csv', 'docx', 'txt', 'manual'
     
     # Counts & Metrics
     raw_count = Column(Integer, default=0)
@@ -22,7 +22,7 @@ class AnalysisSession(Base):
     avg_confidence = Column(Float, default=0.0)
     
     # Sharing
-    share_token = Column(String(64), unique=True, default=lambda: uuid.uuid4().hex)
+    share_token = Column(Unicode(64), unique=True, default=lambda: uuid.uuid4().hex)
     is_public = Column(Boolean, default=False)
     
     # Stored generated reports

@@ -8,15 +8,15 @@ class User(Base):
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    username = Column(String(80), unique=True, nullable=False, index=True)
-    email = Column(String(120), unique=True, nullable=False, index=True)
-    password_hash = Column(String(255), nullable=False)
+    username = Column(Unicode(80), unique=True, nullable=False, index=True)
+    email = Column(Unicode(120), unique=True, nullable=False, index=True)
+    password_hash = Column(Unicode(255), nullable=False)
     full_name = Column(Unicode(150), default='')
-    role = Column(String(20), default='user')  # 'user' or 'admin'
+    role = Column(Unicode(20), default='user')  # 'user' or 'admin'
     token_quota = Column(Integer, default=50000)
     tokens_used = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
-    avatar_url = Column(String(255), default='')
+    avatar_url = Column(Unicode(255), default='')
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
@@ -50,7 +50,7 @@ class PasswordResetToken(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
-    otp_code = Column(String(10), nullable=False)
+    otp_code = Column(Unicode(10), nullable=False)
     expires_at = Column(DateTime, nullable=False)
     is_used = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

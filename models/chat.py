@@ -9,7 +9,7 @@ class ChatMessage(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     session_id = Column(Integer, ForeignKey('analysis_sessions.id', ondelete='CASCADE'), nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    role = Column(String(20), nullable=False)  # 'user' or 'assistant'
+    role = Column(Unicode(20), nullable=False)  # 'user' or 'assistant'
     content = Column(UnicodeText, nullable=False)
     prompt_template = Column(Unicode(100), default='')
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
@@ -37,8 +37,8 @@ class FeedbackRating(Base):
     message_id = Column(Integer, ForeignKey('chat_messages.id'), nullable=True)
     session_id = Column(Integer, ForeignKey('analysis_sessions.id'), nullable=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    rating = Column(String(20), nullable=False)  # 'like', 'dislike', '5_star', etc.
-    feedback_text = Column(Text, default='')
+    rating = Column(Unicode(20), nullable=False)  # 'like', 'dislike', '5_star', etc.
+    feedback_text = Column(UnicodeText, default='')
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     message = relationship('ChatMessage', back_populates='ratings')
