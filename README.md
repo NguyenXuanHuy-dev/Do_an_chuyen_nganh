@@ -1,5 +1,5 @@
 # HỆ THỐNG PHÂN TÍCH CẢM XÚC KHÁCH HÀNG TỪ VĂN BẢN (SENTIMENT AI)
-> **Đồ án chuyên ngành - Nhóm 7**  
+> **Đồ án chuyên ngành**  
 > Xây dựng bằng Python (Flask, SQLAlchemy, Chart.js, Vietnamese NLP Preprocessor & AI Chat Agent)
 
 ---
