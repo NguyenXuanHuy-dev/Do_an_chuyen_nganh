@@ -6,7 +6,7 @@
 
 ## 1. PHÂN TÍCH TÍNH HỢP LÝ CỦA CÁC CHỨC NĂNG (THEO FILE MÔ TẢ ĐỀ TÀI)
 
-Dựa trên tài liệu mô tả đề tài của Nhóm 7, các chức năng được phân tích và đánh giá tính hợp lý, khả thi và giá trị thực tiễn như sau:
+Dựa trên tài liệu mô tả đề tài, các chức năng được phân tích và đánh giá tính hợp lý, khả thi và giá trị thực tiễn như sau:
 
 ### A. Phân hệ USER (Người dùng)
 1. **Đăng nhập / Đăng ký & Google One-Tap SSO:**
