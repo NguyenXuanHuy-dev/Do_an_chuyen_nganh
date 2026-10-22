@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, Unicode, UnicodeText
 from datetime import datetime, timezone
 from database.connection import Base
 
@@ -6,10 +6,10 @@ class PromptTemplate(Base):
     __tablename__ = 'prompt_templates'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    title = Column(String(150), nullable=False)
-    prompt_text = Column(Text, nullable=False)
+    title = Column(Unicode(200), nullable=False)
+    prompt_text = Column(UnicodeText, nullable=False)
     category = Column(String(50), default='chat')  # 'chat', 'report_bod', 'report_cskh', 'aspect'
-    description = Column(String(255), default='')
+    description = Column(Unicode(255), default='')
     is_default = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 

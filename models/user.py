@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Unicode
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from database.connection import Base
@@ -11,7 +11,7 @@ class User(Base):
     username = Column(String(80), unique=True, nullable=False, index=True)
     email = Column(String(120), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
-    full_name = Column(String(120), default='')
+    full_name = Column(Unicode(150), default='')
     role = Column(String(20), default='user')  # 'user' or 'admin'
     token_quota = Column(Integer, default=50000)
     tokens_used = Column(Integer, default=0)

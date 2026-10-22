@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Text, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Text, Boolean, DateTime, ForeignKey, Unicode, UnicodeText
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 import uuid
@@ -9,8 +9,8 @@ class AnalysisSession(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
-    title = Column(String(200), nullable=False)
-    file_name = Column(String(255), default='')
+    title = Column(Unicode(250), nullable=False)
+    file_name = Column(Unicode(255), default='')
     file_type = Column(String(50), default='manual')  # 'xlsx', 'csv', 'docx', 'txt', 'manual'
     
     # Counts & Metrics
@@ -26,8 +26,8 @@ class AnalysisSession(Base):
     is_public = Column(Boolean, default=False)
     
     # Stored generated reports
-    report_bod = Column(Text, default='')   # Ban Giám Đốc report
-    report_cskh = Column(Text, default='')  # CSKH / Kỹ thuật report
+    report_bod = Column(UnicodeText, default='')   # Ban Giám Đốc report
+    report_cskh = Column(UnicodeText, default='')  # CSKH / Kỹ thuật report
     
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -63,12 +63,12 @@ class FeedbackItem(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     session_id = Column(Integer, ForeignKey('analysis_sessions.id', ondelete='CASCADE'), nullable=False)
-    original_text = Column(Text, nullable=False)
-    cleaned_text = Column(Text, default='')
-    sentiment = Column(String(20), nullable=False)  # 'Tích cực', 'Tiêu cực', 'Trung tính'
+    original_text = Column(UnicodeText, nullable=False)
+    cleaned_text = Column(UnicodeText, default='')
+    sentiment = Column(Unicode(50), nullable=False)  # 'Tích cực', 'Tiêu cực', 'Trung tính'
     confidence = Column(Float, default=0.0)
-    aspect = Column(String(50), default='Khác')     # 'Chất lượng', 'Giá cả', 'Dịch vụ', 'Giao hàng', 'Bao bì', 'Khác'
-    aspect_sentiment = Column(String(20), default='')
+    aspect = Column(Unicode(100), default='Khác')     # 'Chất lượng', 'Giá cả', 'Dịch vụ', 'Giao hàng', 'Bao bì', 'Khác'
+    aspect_sentiment = Column(Unicode(50), default='')
     rating_star = Column(Integer, default=0)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 

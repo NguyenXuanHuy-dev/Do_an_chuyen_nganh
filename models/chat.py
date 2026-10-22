@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Unicode, UnicodeText
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from database.connection import Base
@@ -10,8 +10,8 @@ class ChatMessage(Base):
     session_id = Column(Integer, ForeignKey('analysis_sessions.id', ondelete='CASCADE'), nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     role = Column(String(20), nullable=False)  # 'user' or 'assistant'
-    content = Column(Text, nullable=False)
-    prompt_template = Column(String(100), default='')
+    content = Column(UnicodeText, nullable=False)
+    prompt_template = Column(Unicode(100), default='')
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = relationship('User', back_populates='chat_messages')
